@@ -1,454 +1,272 @@
 /**
- * PAX.EDU.VN - Under Construction Page
- * Three.js particle system and interactive animations
+ * PAX.EDU.VN - Lightweight Floating Particles
+ * Inspired by Antigravity style - minimal and elegant
  */
 
-// ===== Three.js Scene Setup =====
-class ParticleScene {
+// Lightweight particle system using Canvas 2D
+class FloatingParticles {
     constructor() {
-        this.container = document.getElementById('canvas-container');
-        this.scene = new THREE.Scene();
-        this.camera = null;
-        this.renderer = null;
-        this.particles = null;
-        this.geometricShape = null;
-        this.mouse = { x: 0, y: 0 };
-        this.targetMouse = { x: 0, y: 0 };
-        this.clock = new THREE.Clock();
-        
+        this.canvas = document.getElementById('bg-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.particleCount = 30; // Reduced count for performance
+        this.mouse = { x: null, y: null };
+        this.animationId = null;
+
         this.init();
+    }
+
+    init() {
+        this.resize();
         this.createParticles();
-        this.createGeometricShape();
-        this.addEventListeners();
+        this.bindEvents();
         this.animate();
     }
-    
-    init() {
-        // Camera
-        this.camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        this.camera.position.z = 30;
-        
-        // Renderer
-        this.renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            alpha: true
-        });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.setClearColor(0x000000, 0);
-        this.container.appendChild(this.renderer.domElement);
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     }
-    
+
     createParticles() {
-        const particleCount = 1500;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
-        
-        // Color palette
-        const colorPalette = [
-            new THREE.Color(0x6366f1), // Indigo
-            new THREE.Color(0x8b5cf6), // Purple
-            new THREE.Color(0xa855f7), // Violet
-            new THREE.Color(0x22d3ee), // Cyan
-            new THREE.Color(0xec4899), // Pink
-        ];
-        
-        for (let i = 0; i < particleCount; i++) {
-            // Spherical distribution
-            const radius = 20 + Math.random() * 30;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(Math.random() * 2 - 1);
-            
-            positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-            positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-            positions[i * 3 + 2] = radius * Math.cos(phi) - 15;
-            
-            // Random color from palette
-            const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-            colors[i * 3] = color.r;
-            colors[i * 3 + 1] = color.g;
-            colors[i * 3 + 2] = color.b;
-            
-            // Random size
-            sizes[i] = Math.random() * 2 + 0.5;
+        this.particles = [];
+        for (let i = 0; i < this.particleCount; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: Math.random() * 3 + 1,
+                speedX: (Math.random() - 0.5) * 0.3,
+                speedY: (Math.random() - 0.5) * 0.3,
+                opacity: Math.random() * 0.5 + 0.2,
+                hue: Math.random() * 60 + 200 // Blue to purple range
+            });
         }
-        
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        
-        // Custom shader material for better particles
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime: { value: 0 },
-                uSize: { value: 3.0 * this.renderer.getPixelRatio() }
-            },
-            vertexShader: `
-                attribute float size;
-                varying vec3 vColor;
-                uniform float uTime;
-                uniform float uSize;
-                
-                void main() {
-                    vColor = color;
-                    vec3 pos = position;
-                    
-                    // Gentle floating animation
-                    pos.y += sin(uTime * 0.5 + position.x * 0.1) * 0.5;
-                    pos.x += cos(uTime * 0.3 + position.z * 0.1) * 0.3;
-                    
-                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                    gl_PointSize = size * uSize * (300.0 / -mvPosition.z);
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            fragmentShader: `
-                varying vec3 vColor;
-                
-                void main() {
-                    float dist = length(gl_PointCoord - vec2(0.5));
-                    if (dist > 0.5) discard;
-                    
-                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-                    alpha *= 0.6;
-                    
-                    gl_FragColor = vec4(vColor, alpha);
-                }
-            `,
-            transparent: true,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
+    }
+
+    bindEvents() {
+        window.addEventListener('resize', () => {
+            this.resize();
+            this.createParticles();
         });
-        
-        this.particles = new THREE.Points(geometry, material);
-        this.scene.add(this.particles);
-    }
-    
-    createGeometricShape() {
-        // Create an icosahedron (20-sided polyhedron)
-        const geometry = new THREE.IcosahedronGeometry(5, 1);
-        
-        // Wireframe material with gradient effect
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime: { value: 0 },
-                uColor1: { value: new THREE.Color(0x6366f1) },
-                uColor2: { value: new THREE.Color(0x22d3ee) }
-            },
-            vertexShader: `
-                varying vec3 vPosition;
-                varying vec3 vNormal;
-                
-                void main() {
-                    vPosition = position;
-                    vNormal = normal;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform float uTime;
-                uniform vec3 uColor1;
-                uniform vec3 uColor2;
-                varying vec3 vPosition;
-                varying vec3 vNormal;
-                
-                void main() {
-                    float mixFactor = (sin(uTime + vPosition.y * 0.5) + 1.0) * 0.5;
-                    vec3 color = mix(uColor1, uColor2, mixFactor);
-                    
-                    float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
-                    float alpha = 0.3 + fresnel * 0.5;
-                    
-                    gl_FragColor = vec4(color, alpha);
-                }
-            `,
-            transparent: true,
-            wireframe: true,
-            side: THREE.DoubleSide
+
+        // Subtle mouse interaction
+        document.addEventListener('mousemove', (e) => {
+            this.mouse.x = e.clientX;
+            this.mouse.y = e.clientY;
         });
-        
-        this.geometricShape = new THREE.Mesh(geometry, material);
-        this.geometricShape.position.set(15, 5, -10);
-        this.scene.add(this.geometricShape);
-        
-        // Create second shape
-        const geometry2 = new THREE.OctahedronGeometry(3, 0);
-        const material2 = material.clone();
-        material2.uniforms.uColor1.value = new THREE.Color(0xec4899);
-        material2.uniforms.uColor2.value = new THREE.Color(0xa855f7);
-        
-        this.geometricShape2 = new THREE.Mesh(geometry2, material2);
-        this.geometricShape2.position.set(-18, -8, -5);
-        this.scene.add(this.geometricShape2);
-        
-        // Create third shape (torus)
-        const geometry3 = new THREE.TorusGeometry(4, 0.5, 16, 50);
-        const material3 = material.clone();
-        material3.uniforms.uColor1.value = new THREE.Color(0x22d3ee);
-        material3.uniforms.uColor2.value = new THREE.Color(0x6366f1);
-        
-        this.geometricShape3 = new THREE.Mesh(geometry3, material3);
-        this.geometricShape3.position.set(-10, 12, -15);
-        this.scene.add(this.geometricShape3);
     }
-    
-    addEventListeners() {
-        window.addEventListener('resize', () => this.onResize());
-        window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+
+    drawParticle(p) {
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `hsla(${p.hue}, 70%, 70%, ${p.opacity})`;
+        this.ctx.fill();
     }
-    
-    onResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    updateParticle(p) {
+        // Gentle floating motion
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        // Subtle mouse repulsion
+        if (this.mouse.x && this.mouse.y) {
+            const dx = p.x - this.mouse.x;
+            const dy = p.y - this.mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 150) {
+                const force = (150 - dist) / 150 * 0.02;
+                p.x += dx * force;
+                p.y += dy * force;
+            }
+        }
+
+        // Wrap around edges
+        if (p.x < -10) p.x = this.canvas.width + 10;
+        if (p.x > this.canvas.width + 10) p.x = -10;
+        if (p.y < -10) p.y = this.canvas.height + 10;
+        if (p.y > this.canvas.height + 10) p.y = -10;
     }
-    
-    onMouseMove(event) {
-        this.targetMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.targetMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    drawConnections() {
+        for (let i = 0; i < this.particles.length; i++) {
+            for (let j = i + 1; j < this.particles.length; j++) {
+                const dx = this.particles[i].x - this.particles[j].x;
+                const dy = this.particles[i].y - this.particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 120) {
+                    const opacity = (1 - dist / 120) * 0.15;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+                    this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+                    this.ctx.strokeStyle = `rgba(147, 112, 219, ${opacity})`;
+                    this.ctx.lineWidth = 0.5;
+                    this.ctx.stroke();
+                }
+            }
+        }
     }
-    
+
     animate() {
-        requestAnimationFrame(() => this.animate());
-        
-        const elapsed = this.clock.getElapsedTime();
-        
-        // Smooth mouse following
-        this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.05;
-        this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.05;
-        
-        // Update particles
-        if (this.particles) {
-            this.particles.rotation.y = elapsed * 0.05;
-            this.particles.rotation.x = elapsed * 0.02;
-            this.particles.material.uniforms.uTime.value = elapsed;
-            
-            // React to mouse
-            this.particles.rotation.y += this.mouse.x * 0.1;
-            this.particles.rotation.x += this.mouse.y * 0.1;
-        }
-        
-        // Animate geometric shapes
-        if (this.geometricShape) {
-            this.geometricShape.rotation.x = elapsed * 0.3;
-            this.geometricShape.rotation.y = elapsed * 0.5;
-            this.geometricShape.position.y = 5 + Math.sin(elapsed * 0.5) * 2;
-            this.geometricShape.material.uniforms.uTime.value = elapsed;
-        }
-        
-        if (this.geometricShape2) {
-            this.geometricShape2.rotation.x = -elapsed * 0.4;
-            this.geometricShape2.rotation.z = elapsed * 0.3;
-            this.geometricShape2.position.y = -8 + Math.cos(elapsed * 0.4) * 3;
-            this.geometricShape2.material.uniforms.uTime.value = elapsed;
-        }
-        
-        if (this.geometricShape3) {
-            this.geometricShape3.rotation.x = elapsed * 0.2;
-            this.geometricShape3.rotation.y = elapsed * 0.4;
-            this.geometricShape3.position.x = -10 + Math.sin(elapsed * 0.3) * 2;
-            this.geometricShape3.material.uniforms.uTime.value = elapsed;
-        }
-        
-        this.renderer.render(this.scene, this.camera);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw connections first (behind particles)
+        this.drawConnections();
+
+        // Update and draw particles
+        this.particles.forEach(p => {
+            this.updateParticle(p);
+            this.drawParticle(p);
+        });
+
+        this.animationId = requestAnimationFrame(() => this.animate());
     }
 }
 
-// ===== Countdown Timer =====
+// Countdown Timer
 class CountdownTimer {
     constructor() {
-        // Set launch date to 30 days from now
-        const launchDate = new Date();
-        launchDate.setDate(launchDate.getDate() + 30);
-        this.targetDate = launchDate.getTime();
-        
-        this.daysEl = document.getElementById('days');
-        this.hoursEl = document.getElementById('hours');
-        this.minutesEl = document.getElementById('minutes');
-        this.secondsEl = document.getElementById('seconds');
-        
+        // Target: 30 days from now
+        this.targetDate = new Date();
+        this.targetDate.setDate(this.targetDate.getDate() + 30);
+
+        this.elements = {
+            days: document.getElementById('days'),
+            hours: document.getElementById('hours'),
+            minutes: document.getElementById('minutes'),
+            seconds: document.getElementById('seconds')
+        };
+
         this.update();
         setInterval(() => this.update(), 1000);
     }
-    
+
     update() {
-        const now = new Date().getTime();
-        const distance = this.targetDate - now;
-        
-        if (distance < 0) {
-            this.daysEl.textContent = '00';
-            this.hoursEl.textContent = '00';
-            this.minutesEl.textContent = '00';
-            this.secondsEl.textContent = '00';
+        const now = new Date();
+        const diff = this.targetDate - now;
+
+        if (diff <= 0) {
+            Object.values(this.elements).forEach(el => {
+                if (el) el.textContent = '00';
+            });
             return;
         }
-        
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        
-        this.animateNumber(this.daysEl, days);
-        this.animateNumber(this.hoursEl, hours);
-        this.animateNumber(this.minutesEl, minutes);
-        this.animateNumber(this.secondsEl, seconds);
-    }
-    
-    animateNumber(element, value) {
-        const newValue = String(value).padStart(2, '0');
-        if (element.textContent !== newValue) {
-            element.style.transform = 'translateY(-5px)';
-            element.style.opacity = '0.5';
-            
-            setTimeout(() => {
-                element.textContent = newValue;
-                element.style.transform = 'translateY(0)';
-                element.style.opacity = '1';
-            }, 150);
-        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (this.elements.days) this.elements.days.textContent = String(days).padStart(2, '0');
+        if (this.elements.hours) this.elements.hours.textContent = String(hours).padStart(2, '0');
+        if (this.elements.minutes) this.elements.minutes.textContent = String(minutes).padStart(2, '0');
+        if (this.elements.seconds) this.elements.seconds.textContent = String(seconds).padStart(2, '0');
     }
 }
 
-// ===== Newsletter Form =====
-class NewsletterForm {
+// Email Form Handler
+class EmailForm {
     constructor() {
-        this.form = document.getElementById('newsletter-form');
+        this.form = document.getElementById('notify-form');
         this.input = document.getElementById('email-input');
-        this.submitBtn = document.getElementById('submit-btn');
-        this.successMessage = document.getElementById('success-message');
-        
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.button = this.form?.querySelector('button');
+
+        if (this.form) {
+            this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
     }
-    
+
     handleSubmit(e) {
         e.preventDefault();
-        
-        const email = this.input.value.trim();
-        if (!this.validateEmail(email)) {
-            this.showError();
+
+        const email = this.input?.value.trim();
+        if (!email || !this.validateEmail(email)) {
+            this.showMessage('Vui lòng nhập email hợp lệ', 'error');
             return;
         }
-        
-        // Simulate form submission
-        this.submitBtn.disabled = true;
-        this.submitBtn.innerHTML = '<span class="btn-text">Đang gửi...</span>';
-        
+
+        // Simulate submission
+        if (this.button) {
+            this.button.textContent = 'Đang gửi...';
+            this.button.disabled = true;
+        }
+
         setTimeout(() => {
-            this.form.style.display = 'none';
-            this.successMessage.classList.add('show');
-            
-            // Store email (in a real app, this would be sent to a server)
-            console.log('Email registered:', email);
-        }, 1500);
+            this.showMessage('Cảm ơn bạn! Chúng tôi sẽ thông báo khi ra mắt.', 'success');
+            if (this.input) this.input.value = '';
+            if (this.button) {
+                this.button.textContent = 'Thông Báo Cho Tôi';
+                this.button.disabled = false;
+            }
+        }, 1000);
     }
-    
+
     validateEmail(email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-    
-    showError() {
-        this.input.style.borderColor = '#ef4444';
-        this.input.classList.add('shake');
-        
-        setTimeout(() => {
-            this.input.style.borderColor = '';
-            this.input.classList.remove('shake');
-        }, 500);
+
+    showMessage(text, type) {
+        // Remove existing message
+        const existing = document.querySelector('.form-message');
+        if (existing) existing.remove();
+
+        const message = document.createElement('div');
+        message.className = `form-message ${type}`;
+        message.textContent = text;
+        message.style.cssText = `
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+            background: ${type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
+            color: ${type === 'success' ? '#10b981' : '#ef4444'};
+            border: 1px solid ${type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
+        `;
+
+        this.form.appendChild(message);
+
+        setTimeout(() => message.remove(), 5000);
     }
 }
 
-// ===== Smooth Scroll Animations =====
-class ScrollAnimations {
+// Smooth scroll reveal animation
+class ScrollReveal {
     constructor() {
-        this.observeElements();
+        this.elements = document.querySelectorAll('.feature-card');
+        this.observer = new IntersectionObserver(
+            (entries) => this.handleIntersect(entries),
+            { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+        );
+
+        this.elements.forEach(el => this.observer.observe(el));
     }
-    
-    observeElements() {
-        const options = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-in');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, options);
-        
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            observer.observe(card);
+
+    handleIntersect(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
         });
     }
 }
 
-// Add CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    .animate-in {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-    }
-    
-    .shake {
-        animation: shake 0.5s ease-in-out;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
-    }
-    
-    .countdown-value {
-        transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-`;
-document.head.appendChild(style);
-
-// ===== Initialize Everything =====
+// Initialize everything when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Three.js scene
-    new ParticleScene();
-    
+    // Initialize lightweight particle system
+    new FloatingParticles();
+
     // Initialize countdown
     new CountdownTimer();
-    
-    // Initialize newsletter form
-    new NewsletterForm();
-    
-    // Initialize scroll animations
-    new ScrollAnimations();
-    
-    // Add loading animation
-    document.body.classList.add('loaded');
-});
 
-// Add loaded state styles
-const loadedStyle = document.createElement('style');
-loadedStyle.textContent = `
-    body {
-        opacity: 0;
-        transition: opacity 0.5s ease;
-    }
-    
-    body.loaded {
-        opacity: 1;
-    }
-`;
-document.head.appendChild(loadedStyle);
+    // Initialize email form
+    new EmailForm();
+
+    // Initialize scroll reveal
+    new ScrollReveal();
+
+    console.log('🚀 PAX.EDU.VN - Lightweight version loaded');
+});
