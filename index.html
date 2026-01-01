@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAX.EDU.VN - Đang Xây Dựng | Coming Soon</title>
+    <meta name="description"
+        content="PAX.EDU.VN - Nền tảng chia sẻ kiến thức và tài liệu học tập sắp ra mắt. Đăng ký ngay để nhận thông báo sớm nhất!">
+    <meta name="keywords" content="pax, knowledge sharing, chia sẻ kiến thức, tài liệu học tập, cộng đồng">
+    <meta name="author" content="PAX Community">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="PAX.EDU.VN - Coming Soon">
+    <meta property="og:description" content="Nền tảng chia sẻ kiến thức và tài liệu học tập sắp ra mắt">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pax.edu.vn">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Overlay gradient -->
+    <div class="overlay"></div>
+
+    <!-- Floating orbs decoration -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Logo & Brand -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="logo-letter">P</span>
+                </div>
+                <span class="logo-text">PAX<span class="logo-domain">.EDU.VN</span></span>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                <span class="badge-text">Đang phát triển</span>
+            </div>
+
+            <h1 class="title">
+                <span class="title-line">Chia Sẻ Kiến Thức</span>
+                <span class="title-line gradient-text">Cùng Nhau Phát Triển</span>
+            </h1>
+
+            <p class="description">
+                Chúng tôi đang xây dựng một cộng đồng chia sẻ kiến thức,
+                nơi mọi người cùng nhau học hỏi và phát triển
+                thông qua các tài liệu và kinh nghiệm thực tế.
+            </p>
+
+            <!-- Countdown Timer -->
+            <div class="countdown" id="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="days">00</span>
+                    <span class="countdown-label">Ngày</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="hours">00</span>
+                    <span class="countdown-label">Giờ</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="minutes">00</span>
+                    <span class="countdown-label">Phút</span>
+                </div>
+                <div class="countdown-separator">:</div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="seconds">00</span>
+                    <span class="countdown-label">Giây</span>
+                </div>
+            </div>
+
+            <!-- Newsletter Form -->
+            <form class="newsletter-form" id="newsletter-form">
+                <div class="input-wrapper">
+                    <input type="email" id="email-input" class="email-input" placeholder="Nhập email của bạn" required
+                        autocomplete="email">
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span class="btn-text">Nhận Thông Báo</span>
+                        <span class="btn-icon">→</span>
+                    </button>
+                </div>
+                <p class="form-hint">🔒 Chúng tôi không spam. Hủy đăng ký bất cứ lúc nào.</p>
+            </form>
+
+            <!-- Success Message -->
+            <div class="success-message" id="success-message">
+                <span class="success-icon">✓</span>
+                <span class="success-text">Cảm ơn bạn! Chúng tôi sẽ thông báo khi ra mắt.</span>
+            </div>
+        </section>
+
+        <!-- Features Preview -->
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-title">Tài Liệu Chất Lượng</h3>
+                <p class="feature-desc">Kho tài liệu được cộng đồng đóng góp và kiểm duyệt</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤝</div>
+                <h3 class="feature-title">Cộng Đồng Hỗ Trợ</h3>
+                <p class="feature-desc">Kết nối với những người cùng đam mê học hỏi</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3 class="feature-title">Kinh Nghiệm Thực Tế</h3>
+                <p class="feature-desc">Chia sẻ kiến thức từ những người đi trước</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="social-links">
+                <a href="#" class="social-link" aria-label="Facebook">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                </a>
+                <a href="#" class="social-link" aria-label="Twitter">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                </a>
+                <a href="#" class="social-link" aria-label="LinkedIn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                    </svg>
+                </a>
+                <a href="#" class="social-link" aria-label="YouTube">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                </a>
+            </div>
+            <p class="copyright">© 2026 PAX.EDU.VN. All rights reserved.</p>
+        </footer>
+    </main>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
